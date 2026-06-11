@@ -16,6 +16,7 @@ jobs:
       HOST: ${{ secrets.HOST }}
       TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
       TELEGRAM_TO: ${{ secrets.TELEGRAM_TO }}
+      SEND_TOKEN: ${{ secrets.SEND_TOKEN }}
 
     steps:
       - uses: actions/checkout@v6

@@ -32,7 +32,41 @@ async function processSingleAccount(account) {
 }
 
 function setGitHubOutput(name, value) {
-  appendFileSync(process.env.GITHUB_OUTPUT, `${name}<<EOF\n${value}\nEOF\n`);
+  if (process.env.GITHUB_OUTPUT) {
+    appendFileSync(process.env.GITHUB_OUTPUT, `${name}<<EOF\n${value}\nEOF\n`);
+  } else {
+    console.log(`[Local Output] ${name}:\n${value}`);
+  }
+}
+
+// 发送微信推送 (PushPlus)
+async function sendWechat(title, msg) {
+  const sendToken = process.env.SEND_TOKEN;
+  if (!sendToken) {
+    console.log("未配置 SEND_TOKEN，跳过 PushPlus 推送。");
+    return;
+  }
+
+  try {
+    const response = await fetch("https://www.pushplus.plus/send/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        token: sendToken,
+        title: title,
+        content: msg,
+      }),
+    });
+    if (response.ok) {
+      console.log("PushPlus 推送成功。");
+    } else {
+      console.error(`PushPlus 推送失败: HTTP ${response.status}`);
+    }
+  } catch (error) {
+    console.error(`PushPlus 推送出错: ${error.message}`);
+  }
 }
 
 // 入口
@@ -84,6 +118,10 @@ async function main() {
   const resultMsg = resultLines.join("\n");
 
   setGitHubOutput("result", resultMsg);
+
+  const statusMsg = hasError ? "部分失败或出错" : "全部成功";
+  const title = `iKuuu签到结果: ${statusMsg}`;
+  await sendWechat(title, resultMsg);
 
   if (hasError) {
     process.exit(1);
